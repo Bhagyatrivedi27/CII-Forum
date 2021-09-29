@@ -14,7 +14,7 @@ const User = require('../../models/User')
 
 const jwt = require('jsonwebtoken')
 
-// @Route  POST api/users
+// @Route  POST api/users/register-user
 // @desc   Register User
 // @access Public
 router.post('/register-user', [
@@ -89,6 +89,9 @@ router.post('/register-user', [
 
 });
 
+// @Route  POST api/users/delete-user
+// @desc   Delete User
+// @access Public
 router.post('/delete-user',[check('email','Please include a valid email').isEmail()], async (req, res) => {
 
     const errors = validationResult(req);

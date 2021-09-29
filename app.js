@@ -23,5 +23,5 @@ app.use('/api/profile', require('./routes/api/profile'));
 app.use('/api/auth', require('./routes/api/auth'));
 
 app.listen(port, () => 
-    console.log(`app listening at ${port}`)
+    console.log(`[Info] Server started successfully! Listening at ${port}`)
 )
