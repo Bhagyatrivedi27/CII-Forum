@@ -1,3 +1,4 @@
 {
-    "mongoURI": "mongodb+srv://cii2021:cii2021@cii-forum.a6shs.mongodb.net/cii-forum?retryWrites=true&w=majority"
+    "mongoURI": "mongodb+srv://cii2021:cii2021@cii-forum.a6shs.mongodb.net/cii-forum?retryWrites=true&w=majority",
+    "jwtSecret": "EEESucks"
 }
