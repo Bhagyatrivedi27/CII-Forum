@@ -30,6 +30,17 @@ router.post('/', [
 
     const {name, email,password} = req.body;
 
+    //Check if the email is an institute email ID 
+    let subEmail1 = '@student.nitw.ac.in'
+    let subEmail2 = '@nitw.ac.in'
+    if(!email.includes(subEmail1) && !email.includes(subEmail2))
+    {
+        res.send('Please enter a valid email')
+
+        //exit
+        process.exit(1);
+    }
+
     try{
 
         //See if user exits 

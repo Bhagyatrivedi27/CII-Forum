@@ -20,5 +20,13 @@
     "mongoose": "^6.0.8",
     "request": "^2.88.2",
     "supervisor": "^0.12.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bhagyatrivedi27/cii-forum.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Bhagyatrivedi27/cii-forum/issues"
+  },
+  "homepage": "https://github.com/Bhagyatrivedi27/cii-forum#readme"
 }
