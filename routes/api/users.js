@@ -17,7 +17,7 @@ const jwt = require('jsonwebtoken')
 // @Route  POST api/users
 // @desc   Register User
 // @access Public
-router.post('/', [
+router.post('/register-user', [
     check('name','Name is required').not().isEmpty(),
     check('email','Please include a valid email').isEmail(),
     check('password','Please enter a password with 6 or more characters').isLength({ min: 6})
@@ -35,7 +35,7 @@ router.post('/', [
     let subEmail2 = '@nitw.ac.in'
     if(!email.includes(subEmail1) && !email.includes(subEmail2))
     {
-        res.send('Please enter a valid email')
+        return res.status(400).json({errors: [{msg:'Please enter a valid Institute Email'}] });
 
         //exit
         process.exit(1);
@@ -82,6 +82,30 @@ router.post('/', [
             throw err;
             res.json({token});
         })        
+    } catch (err) {
+        console.error(err.message)
+        res.status(500).send('Server Error')
+    }
+
+});
+
+router.post('/delete-user',[check('email','Please include a valid email').isEmail()], async (req, res) => {
+
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(400).json({errors: errors.array()});
+    }
+
+    const {email} = req.body
+
+    try {
+        let user = await User.findOne({email})
+        if(!user){
+            return res.status(400).json({errors: [{msg:'User not found!'}] });
+        }
+
+        await User.remove({email})
+        return res.status(200).json({msg: 'User Deleted successfully! '})
     } catch (err) {
         console.error(err.message)
         res.status(500).send('Server Error')
