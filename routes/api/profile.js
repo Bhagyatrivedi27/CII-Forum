@@ -188,4 +188,73 @@ router.put('/experience',[auth, [
         res.status(500).send('Server Error');
     }
 })
+
+// @Route  PUT api/profile/clubs
+// @desc   Add profile clubs
+// @access Private
+router.put('/clubs', [auth, [
+    check('clubName', 'Club name is required! ').not().isEmpty(),
+    check('position', 'Position is required! ').not().isEmpty()
+]], async(req, res) => {
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(400).json({errors: errors.array()});
+    }
+
+    const {
+        clubName,
+        position
+    } = req.body;
+
+    const newClub = {
+        clubName,
+        position
+    }
+
+    try {
+        const profile = await Profile.findOne({user: req.user.id})
+        profile.clubs.unshift(newClub)
+
+
+        await profile.save()
+
+        res.json(profile);
+    } catch (err) {
+        console.error(err.message)
+        return res.status(500).json('Server Error') 
+    }
+})
+
+// @Route  PUT api/profile/badges
+// @desc   Add profile clubs
+// @access Private
+router.put('/badges', [auth, [
+    check('title', 'Badge title is required! ').not().isEmpty()
+]], async(req,res)=>{
+
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(400).json({errors: errors.array()});
+    }
+
+    const{
+        title
+    } = req.body;
+
+    const newBadge = {
+        title
+    }
+
+    try {
+        const profile = await Profile.findOne({user: req.user.id})
+        profile.badges.unshift(newBadge);
+
+        await profile.save()
+        res.json(profile)
+        
+    } catch (err) {
+        console.error(err.message)
+        return res.status(500).json('Server Error')
+    }
+})
 module.exports = router;
