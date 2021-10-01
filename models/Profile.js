@@ -34,6 +34,7 @@ const ProfileSchema = new mongoose.Schema({
         rollno: {
             type: Number,
             required: true,
+            unique: false
         },
         regno: {
             type: Number,
@@ -50,7 +51,6 @@ const ProfileSchema = new mongoose.Schema({
     }],
     contactNo: {
         type: Number,
-        unique: true
     },
     status: {
         type: String,
@@ -98,7 +98,6 @@ const ProfileSchema = new mongoose.Schema({
     }],
     hostel: {
         type: String,
-        required: true
     },
     social: {
         linkedin: {

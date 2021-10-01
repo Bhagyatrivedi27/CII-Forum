@@ -4,7 +4,7 @@ const router = express.Router();
 
 const auth = require('../../middleware/auth')
 
-const {check, validationResult} = require('express-validator/check')
+const {check, validationResult} = require('express-validator')
 
 const Profile = require('../../models/Profile')
 
@@ -83,7 +83,7 @@ router.post('/', [auth, [
             return res.json(profile)
         }
 
-        profile = new Profile(profileFields)
+       else profile = new Profile(profileFields)
         
         await profile.save();
         res.json(profile)
@@ -96,4 +96,96 @@ router.post('/', [auth, [
 
 })
 
+// @Route  GET api/profile/
+// @desc   Get all profiles
+// @access Private
+router.get('/', async (req,res) => {
+    try {
+        const profiles = await Profile.find().populate('user', ['name', 'avatar'])
+        res.json(profiles);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error')
+    }
+})
+
+// @Route  GET api/profile/user/:user_id
+// @desc   Get profile by id
+// @access Private
+router.get('/user/:user_id',auth, async (req,res) => {
+    try {
+        const profile = await Profile.findOne({user: req.params.user_id}).populate('user', ['name', 'avatar'])
+        if(!profile)
+            return res.status(400).json({msg: 'Profile not Found!'})
+        res.json(profile);
+    } catch (err) {
+        console.error(err.message);
+        if(err.kind == 'ObjectId'){
+            return res.status(400).json({msg: 'Profile not Found!'})
+        }
+        res.status(500).send('Server Error')
+    }
+})
+
+// @Route  DELETE api/profile/
+// @desc   delete profile, user & posts
+// @access Private
+router.delete('/',auth, async (req,res) => {
+    try {
+        //remove profile
+        await Profile.findOneAndRemove({user: req.body.id})
+        
+        await User.findOneAndRemove({_id: req.user.id})
+        
+        res.json({msg: 'User deleted'})
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error')
+    }
+})
+
+// @Route  PUT api/profile/experience
+// @desc   Add profile experience
+// @access Private
+router.put('/experience',[auth, [
+    check('position', 'Position is required').not().isEmpty(),
+    check('company', 'Company is required').not().isEmpty(),
+    check('from', 'From date is required').not().isEmpty(),
+    check('to', 'To date is required').not().isEmpty()
+]] , async(req,res)=>{
+    //Frontend will have a form to add exp 
+    //Hence add some checks
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(400).json({errors: errors.array() });
+    }
+
+    const{
+        position,
+        company,
+        from,
+        to,
+        description
+    }= req.body
+
+    const newExp = {
+        position,
+        company,
+        from, 
+        to,
+        description
+    } 
+    
+    try {
+        const profile = await Profile.findOne({user: req.user.id});
+        profile.experience.unshift(newExp)
+
+        await profile.save()
+
+        res.json(profile)
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+})
 module.exports = router;
