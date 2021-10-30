@@ -41,7 +41,7 @@ router.post('/', [auth, [
 
     const {
         college,
-        contactNo,//
+        contactNo,
         status,
         skills,
         bio,
@@ -57,6 +57,8 @@ router.post('/', [auth, [
 
     //Build profile
     const profileFields = {}
+
+    //connecting user to his particular profile
     profileFields.user = req.user.id
     if(contactNo) profileFields.contactNo = contactNo
     if(bio) profileFields.bio = bio
@@ -68,7 +70,7 @@ router.post('/', [auth, [
     if(skills){
         profileFields.skills = skills.split(',').map(skill => skill.trim())
     }
-
+// html, c++, python 
     //Build social object
     profileFields.social = {}
     if(linkedin) profileFields.social.linkedin = linkedin
@@ -257,4 +259,34 @@ router.put('/badges', [auth, [
         return res.status(500).json('Server Error')
     }
 })
+
+
+// @Route  DELETE api/profile/experience/:exp_id
+// @desc   Delete profile experience
+// @access Private
+router.delete('/experience/:exp_id', auth, async(req,res) => {
+    try {
+        const profile = await Profile.findOne({ user: req.user.id})
+
+        const removeIndex = profile.experience.map(item => item.id).indexOf(req.params.exp_id)
+
+        profile.experience.splice(removeIndex, 1)
+
+        await profile.save()
+
+        res.json(profile);
+        
+    } catch (err) {
+        console.error(err.message)
+        res.status(500).send('Server Error')
+    }
+})
+
+
+//TO DO 
+
+// @Route  POST api/profile/college
+// @desc   create or update college deets
+// @access Private
+
 module.exports = router;

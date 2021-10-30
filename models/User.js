@@ -14,6 +14,20 @@
          type: String,
          required: true
      },
+     joiningYear: {
+         type: String,
+         required: true
+     },
+     rollNo: {
+         type: String,
+         required: true,
+         unique: true
+     },
+     regNo: {
+         type: String, 
+         required: true,
+         unique: true
+     },
      avatar: {
          type: String
      },

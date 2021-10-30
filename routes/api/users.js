@@ -14,13 +14,18 @@ const User = require('../../models/User')
 
 const jwt = require('jsonwebtoken')
 
-// @Route  POST api/users/register-user
+// @Route  POST http://localhost:3000/api/users/register-user
 // @desc   Register User
 // @access Public
 router.post('/register-user', [
     check('name','Name is required').not().isEmpty(),
     check('email','Please include a valid email').isEmail(),
-    check('password','Please enter a password with 6 or more characters').isLength({ min: 6})
+    check('password','Please enter a password with 6 or more characters').isLength({ min: 6}),
+    check('joiningYear', 'Please enter year of joining').not().isEmpty(),
+    check('rollNo', 'Please enter valid roll number').not().isEmpty(),
+    check('regNo', 'Please enter valid registration number').not().isEmpty(),
+
+    
 ],
     async (req,res) => {
     const errors = validationResult(req);
@@ -28,19 +33,27 @@ router.post('/register-user', [
         return res.status(400).json({errors: errors.array()});
     }
 
-    const {name, email,password} = req.body;
+    const {name, email,password,joiningYear, rollNo,regNo } = req.body;
 
     //Check if the email is an institute email ID 
+    // TO DO: 
+    // 1) Properly validate that the given email is NITW's email from the correct batch
+    // 2) We have to check if the particular exists. (No one can create a dummy student email ID)
+
+    // mb812073@stud
+    // rm842073
+    // bt811879
+    // firstNameFirst5Char_rollno 
+    //  gupta_roll@
+
     let subEmail1 = '@student.nitw.ac.in'
     let subEmail2 = '@nitw.ac.in'
     if(!email.includes(subEmail1) && !email.includes(subEmail2))
     {
         return res.status(400).json({errors: [{msg:'Please enter a valid Institute Email'}] });
-
-        //exit
-        process.exit(1);
+        
     }
-
+    
     try{
 
         //See if user exits 
@@ -49,6 +62,14 @@ router.post('/register-user', [
            return res.status(400).json({errors: [{msg:'User Already Exists'}] });
         }
 
+        let user = await User.findOne({rollNo})
+        if(user){
+            return res.status(400).json({errors: [{msg:'User Already Exists'}] });
+         }
+         let user = await User.findOne({regNo})
+         if(user){
+             return res.status(400).json({errors: [{msg:'User Already Exists'}] });
+          }
         // Get users gravatar 
         const avatar = gravatar.url(email, {
             s: '200',
@@ -60,7 +81,10 @@ router.post('/register-user', [
             name,
             email,
             avatar,
-            password
+            password,
+            joiningYear,
+            rollNo, 
+            regNo
         });
 
         //Encrypt password 
@@ -68,6 +92,8 @@ router.post('/register-user', [
 
         user.password = await bcrypt.hash(password, salt)
 
+
+        //Save user to database 
         await user.save();
 
         const payload = {

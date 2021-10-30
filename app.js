@@ -1,7 +1,10 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+//frontend hits to backend
 const cors = require('cors')
+
 const connectDB = require('./config/db')
+
 const app = express()
 
 //Connect to DB
@@ -22,6 +25,7 @@ app.use('/api/posts', require('./routes/api/posts'));
 app.use('/api/profile', require('./routes/api/profile'));
 app.use('/api/auth', require('./routes/api/auth'));
 
+//server 
 app.listen(port, () => 
     console.log(`[Info] Server started successfully! Listening at ${port}`)
 )
