@@ -18,6 +18,7 @@
     "gravatar": "^1.8.2",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.0.8",
+    "nodemailer": "^6.7.0",
     "request": "^2.88.2",
     "supervisor": "^0.12.0"
   },
