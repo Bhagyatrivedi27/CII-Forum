@@ -73,7 +73,7 @@ router.get("/verify", async function (req, res) {
           }
         );
 
-        return res.status(200).send("Account has been Created");
+        return res.status(200).json(token);
 
       } catch (err) {
         return res.status(403).send("Server Error")
@@ -170,7 +170,7 @@ router.post(
         if(error) {
           return res.status(403).send(error.message);
         } else {
-          return res.status(200).send("Email Sent");
+          return res.status(200).send("Email Sent");  
         }
       });
 
