@@ -6,6 +6,8 @@ const auth = require("../../middleware/auth");
 
 const Post = require('../../models/Post');
 
+const User = require('../../models/User');
+
 // @Route  GET api/posts
 // @desc   Test route
 // @access Public
@@ -68,7 +70,7 @@ router.put("/update/:id", auth, async (req,res) => {
   }
 });
 
-// Delete
+// Delete Post
 router.delete("/delete/:id", auth, async (req, res) =>{
   try {
     const post = await Post.findById(req.params.id);
@@ -85,7 +87,6 @@ router.delete("/delete/:id", auth, async (req, res) =>{
   }
 })
 
-
 // Like and Dislike
 router.put("/:id/like", auth, async (req, res) =>{
   try {
@@ -101,6 +102,74 @@ router.put("/:id/like", auth, async (req, res) =>{
     }
 
   }catch(err){
+    console.log(err);
+    res.status(500).json(err);
+  }
+})
+
+// Get Comments
+router.get("/comment/:id", async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post.comments) {
+      return res.status(400).json({ msg: "No Comments" });
+    } else {
+      return res.status(400).json(post.comments);
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// Post Comment
+router.post("/comment/post/:id", auth, async (req, res) => {
+  try {
+    const commentObj = {
+      user: req.user.id,
+      text: req.body.text,
+      name: req.body.name
+    };
+    
+    const post = await Post.findById(req.params.id);
+    post.comments.unshift(commentObj);
+
+    const savedPost = await post.save();
+    res.status(200).json(savedPost.comments);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+});
+
+router.post("/comment/update/:id", auth, async (req, res) => {
+  try {
+    const commentObj = {  
+      text: req.body.text,
+      commentid: req.body.commentid,
+    };
+    
+    const post = await Post.findById(req.params.id);
+    const comment = post.comments.find(comment => comment.id === commentObj.commentid);
+    
+    comment.edited = true;
+    comment.text = commentObj.text;
+
+    post.updateOne({ $push: { comment: commentObj.commentid } });
+
+    console.log(post.comments);
+    res.status(200).json(post.comments);
+
+    // if (post.comments.includes(commentObj.commentid)) {
+    //   await post.updateOne({ $push: { likes: req.user.id } });
+    //   res.status(200).json("The post has been liked");
+    // } else {
+    //   await post.updateOne({ $pull: { likes: req.user.id } });
+    //   res.status(200).json("The post has been disliked");
+    // }
+  } catch (err) {
     console.log(err);
     res.status(500).json(err);
   }

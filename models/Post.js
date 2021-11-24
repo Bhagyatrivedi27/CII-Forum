@@ -30,6 +30,10 @@ const PostSchema = new mongoose.Schema({
     default: [],
   },
 
+  hashtag: {
+    type: String,
+  },
+
   comments: [
     {
       user: {
@@ -42,6 +46,11 @@ const PostSchema = new mongoose.Schema({
       },
       name: {
         type: String,
+        default: "Anonyomous",
+      },
+      edited: {
+        type: Boolean,
+        default: false,
       },
       date: {
         type: Date,
@@ -55,5 +64,6 @@ const PostSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
 
 module.exports = Posts = mongoose.model("post", PostSchema);
