@@ -51,7 +51,7 @@ router.get("/verify", async function (req, res) {
         //Encrypt password
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
-
+        console.log("YESS");
         //Save user to database
         await user.save();
         console.log("User Created...");
@@ -76,6 +76,7 @@ router.get("/verify", async function (req, res) {
         return res.status(200).json(token);
 
       } catch (err) {
+        console.log(err);
         return res.status(403).send("Server Error")
       }
 
@@ -145,7 +146,6 @@ router.post(
     );
 
     var url = config.get("baseUrl") + "api/users/verify?id=" + token_mail_verification;
-
     // Initializing Nodemail Transporter
     try {
       let transporter = nodemailer.createTransport({
@@ -154,13 +154,13 @@ router.post(
         secure: false,
         requireTLS: true,
         auth: {
-          user: "ig-nitw@student.nitw.ac.in", // like : abc@gmail.com , Yoour email u are sending the mail from
-          pass: "%KePPKIm5dL1mz69!saw@hHFGM1IItGne1UQhpBrcR3QK4GG^s", // like : pass@123
+          user: "rithiktester@gmail.com", // like : abc@gmail.com , Yoour email u are sending the mail from
+          pass: "rithikTEST1@", // like : pass@123
         },
       });
 
       let mailOptions = {
-        from: "ig-nitw@student.nitw.ac.in",
+        from: "rithiktester@gmail.com",
         to: `${email}`,
         subject: "IG Forum Verification Email",
         text: "Click on the link to veriy your account " + url,

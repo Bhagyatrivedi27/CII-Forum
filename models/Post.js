@@ -30,8 +30,14 @@ const PostSchema = new mongoose.Schema({
     default: [],
   },
 
-  hashtag: {
-    type: String,
+  tags: {
+    type: Array,
+    default: [],
+  },
+
+  updated: {
+    type: Boolean,
+    default:false
   },
 
   comments: [

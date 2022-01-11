@@ -1,111 +1,141 @@
-const express = require('express')
+const express = require("express");
 
 const router = express.Router();
 
 const auth = require("../../middleware/auth");
 
-const Post = require('../../models/Post');
-
-const User = require('../../models/User');
+const Post = require("../../models/Post");
+const User = require("../../models/User");
+const Tags = require("../../models/Tags");
 
 // @Route  GET api/posts
 // @desc   Test route
 // @access Public
 
 // Get Post
-router.get("/", auth, async(req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
-      const posts = await Post.find({});
-        if(!posts){
-            return res.status(400).json({msg: 'No Posts'});
-        } else {
-          return res.status(400).json(posts);
-        }
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
+    const posts = await Post.find({});
+    if (!posts) {
+      return res.status(400).json({ msg: "No Posts" });
+    } else {
+      return res.status(400).json(posts);
     }
-
-});
-
-// Create Post
-router.post("/post", auth, async (req,res) => {
-  const {
-    title,
-    body,
-  } = req.body;
-
-  const postField = {}
-
-  postField.user = req.user.id;
-  if(title) postField.title = title;
-  if(body) postField.body = body;
-
-  const newPost = new Post(postField)
-  try{
-
-    const savedPost = await newPost.save();
-    res.status(200).json(savedPost);
-
-  } catch(err) {
+  } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
-})
+});
+
+// Create Post
+router.post("/post", auth, async (req, res) => {
+  const { title, body, tags } = req.body;
+
+  const postField = {};
+
+  postField.user = req.user.id;
+  if (title) postField.title = title;
+  if (body) postField.body = body;
+  if (tags) {
+    postField.tags = tags.split(",").map((tags) => tags.trim());
+  }
+
+  // Creating Post
+  const newPost = new Post(postField);
+  try {
+    const savedPost = await newPost.save();
+    try {
+      postField.tags.forEach(function (tag) {
+        Tags.findOneAndUpdate({
+          query: { name: `${tag}` },
+          update: {
+            $setOnInsert: { $push: { posts: savedPost } },
+          },
+          new: true,
+          upsert: true,
+        });
+      });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server Error");
+    }
+
+    res.status(200).json(savedPost);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+
+});
 
 // Update Post
-router.put("/update/:id", auth, async (req,res) => {
+router.put("/update/:id", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
-    if(post.userId === req.body.userId){
-      await post.updateOne({$set:req.body});
-      res.status(200).json("The post has been updated");
+    const { title, body, tags } = req.body;
 
+    const postUpdated = post;
+
+    if (title) postUpdated.title = title;
+    if (body) postUpdated.body = body;
+    if (tags) postUpdated.tags = tags.split(",").map((tags) => tags.trim());
+
+    if (post.userId === req.body.userId) {
+      await post.updateOne({
+        $set: {
+          title: postUpdated.title,
+          body: postUpdated.body,
+          tags: postUpdated.tags,
+        },
+      });
+
+      await post.updateOne({
+        $set: { updated: true },
+      });
+
+      res.status(200).json(post);
     } else {
       res.status(403).json("you can update only your post");
     }
-  }catch(err){
+  } catch (err) {
     res.status(500).json(err);
   }
 });
 
 // Delete Post
-router.delete("/delete/:id", auth, async (req, res) =>{
+router.delete("/delete/:id", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
-    if(post.userId === req.body.userId){
-      await post.deleteOne({$set:req.body});
+    if (post.userId === req.body.userId) {
+      await post.deleteOne({ _id: req.params.id });
       res.status(200).json("Post has been delete");
-
     } else {
-      res.status(403).json("you can update only your post");
+      res.status(403).json("Error During Deleting Post");
     }
-  } catch(err) {
+  } catch (err) {
     res.status(500).json(err);
   }
-})
+});
 
 // Like and Dislike
-router.put("/:id/like", auth, async (req, res) =>{
+router.put("/:id/like", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
-    if(!post.likes.includes(req.user.id)){
-      await post.updateOne({ $push: { likes: req.user.id }});
+    if (!post.likes.includes(req.user.id)) {
+      await post.updateOne({ $push: { likes: req.user.id } });
       res.status(200).json("The post has been liked");
-
     } else {
-      await post.updateOne({ $pull: { likes: req.user.id }});
+      await post.updateOne({ $pull: { likes: req.user.id } });
       res.status(200).json("The post has been disliked");
     }
-
-  }catch(err){
+  } catch (err) {
     console.log(err);
     res.status(500).json(err);
   }
-})
+});
 
 // Get Comments
 router.get("/comment/:id", async (req, res) => {
@@ -129,15 +159,14 @@ router.post("/comment/post/:id", auth, async (req, res) => {
     const commentObj = {
       user: req.user.id,
       text: req.body.text,
-      name: req.body.name
+      name: req.body.name,
     };
-    
+
     const post = await Post.findById(req.params.id);
     post.comments.unshift(commentObj);
 
     const savedPost = await post.save();
     res.status(200).json(savedPost.comments);
-
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
@@ -146,14 +175,16 @@ router.post("/comment/post/:id", auth, async (req, res) => {
 
 router.post("/comment/update/:id", auth, async (req, res) => {
   try {
-    const commentObj = {  
+    const commentObj = {
       text: req.body.text,
       commentid: req.body.commentid,
     };
-    
+
     const post = await Post.findById(req.params.id);
-    const comment = post.comments.find(comment => comment.id === commentObj.commentid);
-    
+    const comment = post.comments.find(
+      (comment) => comment.id === commentObj.commentid
+    );
+
     comment.edited = true;
     comment.text = commentObj.text;
 
@@ -173,7 +204,22 @@ router.post("/comment/update/:id", auth, async (req, res) => {
     console.log(err);
     res.status(500).json(err);
   }
-})
+});
 
+// Posts under hashtag
+router.get("/tag/:name", auth, async (req, res) => {
+  try {
+    const hashtag = await Tags.find();
+
+    if (!hashtag.posts) {
+      return res.status(400).json({ msg: "No Posts under this Hashtag" });
+    } else {
+      return res.status(400).json(hashtag.posts);
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
 
 module.exports = router;
