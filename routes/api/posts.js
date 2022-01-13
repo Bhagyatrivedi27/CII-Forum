@@ -44,27 +44,19 @@ router.post("/post", auth, async (req, res) => {
   const newPost = new Post(postField);
   try {
     const savedPost = await newPost.save();
-    try {
-      postField.tags.forEach(function (tag) {
-        Tags.findOneAndUpdate({
-          query: { name: `${tag}` },
-          update: {
-            $setOnInsert: { $push: { posts: savedPost } },
-          },
-          new: true,
-          upsert: true,
-        });
-      });
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Server Error");
-    }
-
-    res.status(200).json(savedPost);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
+
+  const tagObject = {
+    id: newPost.id
+  }
+  const newTag = new Tags({name:"WER",  $push :{posts:tagObject}});
+  const savedTag = await newTag.save();
+
+  newTag.posts.unshift(tagObject);
+  res.status(300).send("Created");
 
 });
 
@@ -207,12 +199,11 @@ router.post("/comment/update/:id", auth, async (req, res) => {
 });
 
 // Posts under hashtag
-router.get("/tag/:name", auth, async (req, res) => {
+router.get("/tags", auth, async (req, res) => {
   try {
-    const hashtag = await Tags.find();
-
-    if (!hashtag.posts) {
-      return res.status(400).json({ msg: "No Posts under this Hashtag" });
+    const hashtag = await Tags.find({});
+    if (hashtag) {
+      return res.status(400).json(hashtag);
     } else {
       return res.status(400).json(hashtag.posts);
     }
