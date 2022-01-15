@@ -15,11 +15,12 @@ const User = require('../../models/User')
 // @access Private
 router.get('/me', auth, async(req,res) => {
     try {
-        const profile = await Profile.findOne({user: req.user.id}).populate('user', ['name', 'avatar']);
+        const profile = await Profile.findOne({user: req.user.id}).populate('user', ['name','email']);
         if(!profile){
             return res.status(400).json({msg: 'There is no profile for this user'});
         }
-        res.json(profile);
+        res.status(200).json(profile);
+
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -41,6 +42,8 @@ router.post('/', [auth, [
 
     const {
         college,
+        firstName,
+        lastName,
         contactNo,
         status,
         skills,
@@ -60,6 +63,8 @@ router.post('/', [auth, [
 
     //connecting user to his particular profile
     profileFields.user = req.user.id
+    if(firstName) profileFields.firstName = firstName
+    if(lastName) profileFields.lastName = lastName
     if(contactNo) profileFields.contactNo = contactNo
     if(bio) profileFields.bio = bio
     if(hostel) profileFields.hostel = hostel
@@ -70,7 +75,7 @@ router.post('/', [auth, [
     if(skills){
         profileFields.skills = skills.split(',').map(skill => skill.trim())
     }
-// html, c++, python 
+
     //Build social object
     profileFields.social = {}
     if(linkedin) profileFields.social.linkedin = linkedin
@@ -81,14 +86,14 @@ router.post('/', [auth, [
         if(profile)
         {
             //update
-            profile = await Profile.findOneAndUpdate({user: req.user.id}, {$set: profileFields}, { new: true})
-            return res.json(profile)
+            profile = await Profile.findOneAndUpdate({user: req.user.id}, {$set: profileFields}, {upsert: true}, {new: true})
+            return res.status(200).json(profile)
         }
 
        else profile = new Profile(profileFields)
         
         await profile.save();
-        res.json(profile)
+        res.status.json(profile)
         
 
     } catch (err) {
@@ -281,7 +286,6 @@ router.delete('/experience/:exp_id', auth, async(req,res) => {
         res.status(500).send('Server Error')
     }
 })
-
 
 //TO DO 
 

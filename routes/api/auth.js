@@ -28,10 +28,10 @@ router.get('/', auth, async (req,res) => {
     }
 });
 
-// @Route  POST api/auth/user-login
+// @Route  POST api/auth/login
 // @desc   Authenticate User & get Token
 // @access Public
-router.post('/user-login', [
+router.post('/login', [
     check('email','Please include a valid email').isEmail(),
     check('password','Password is required').exists()
 ],
@@ -43,19 +43,7 @@ router.post('/user-login', [
 
     const {email,password} = req.body;
 
-    // //Check if the email is an institute email ID 
-    // let subEmail1 = '@student.nitw.ac.in'
-    // let subEmail2 = '@nitw.ac.in'
-    // if(!email.includes(subEmail1) && !email.includes(subEmail2))
-    // {
-    //     return res.status(400).json({errors: [{msg:'Please enter a valid Institute Email'}] });
-
-    //     //exit
-    //     process.exit(1);
-    // }
-
     try{
-
         //See if user exits 
         let user = await User.findOne({email});
         if(!user){
@@ -84,7 +72,16 @@ router.post('/user-login', [
         console.error(err.message)
         res.status(500).send('Server Error')
     }
-
 });
 
 module.exports = router;
+
+//Check if the email is an institute email ID 
+// let subEmail1 = '@student.nitw.ac.in'
+// let subEmail2 = '@nitw.ac.in'
+// if(!email.includes(subEmail1) && !email.includes(subEmail2))
+// {
+//     return res.status(400).json({errors: [{msg:'Please enter a valid Institute Email'}] });
+//     //exit
+//     process.exit(1);
+// }
