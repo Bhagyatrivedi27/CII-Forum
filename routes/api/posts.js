@@ -8,19 +8,18 @@ const Post = require("../../models/Post");
 const User = require("../../models/User");
 const Tags = require("../../models/Tags");
 
-
-
-// @Route  GET api/posts/
-// @desc   Get all Posts
+// @Route  GET api/posts
+// @desc   Test route
 // @access Public
+
+// Get Post
 router.get("/", auth, async (req, res) => {
   try {
     const posts = await Post.find({});
-
     if (!posts) {
       return res.status(400).json({ msg: "No Posts" });
     } else {
-      return res.status(200).json(posts);
+      return res.status(400).json(posts);
     }
   } catch (err) {
     console.error(err.message);
@@ -28,68 +27,50 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
-// @Route  GET api/posts/post
-// @desc   Create Post
-// @access Private
+// Create Post
 router.post("/post", auth, async (req, res) => {
-  try{
-    const { title, body, imageUrl, tags } = req.body;
+  const { title, body, tags } = req.body;
 
-    const postField = {};
+  const postField = {};
 
-    // User Details
-    postField.userId = req.user.id;
-    postField.username = req.user.username;
+  postField.user = req.user.id;
+  if (title) postField.title = title;
+  if (body) postField.body = body;
+  if (tags) {
+    postField.tags = tags.split(",").map((tags) => tags.trim());
+  }
 
-    // Post Details
-    if (title) postField.title = title;
-    if (body) postField.body = body;
-    if (imageUrl) postField.imageUrl = imageUrl;
-    if (tags) postField.tags = tags.split(",").map((tags) => tags.trim()); 
-    
-
-    // Creating Post
-    const newPost = new Post(postField);
+  // Creating Post
+  const newPost = new Post(postField);
+  try {
     const savedPost = await newPost.save();
-
-    // Creating or Inserting into Tags
-    postField.tags.forEach(async (tag) => {
-      const tagField = await Tags.find({name: tag})
-      
-      if(tagField){
-        tagField.posts.unshift(savedPost.id);
-        const savedTag = await tag.save();
-      } else {
-
-        const newTag = new Tag({name: tag})
-        const savedTag = await newTag.save();
-
-        newTag.posts.unshift(savedPost.id);
-      }
-    });
-
-    res.status(200).json(savedPost);
-
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({msg:"Server Error"});
+    res.status(500).send("Server Error");
   }
+
+  const tagObject = {
+    id: newPost.id
+  }
+  const newTag = new Tags({name:"WER",  $push :{posts:tagObject}});
+  const savedTag = await newTag.save();
+
+  newTag.posts.unshift(tagObject);
+  res.status(300).send("Created");
+
 });
 
-// @Route  GET api/posts/update/:id
-// @desc   Update Post
-// @access Private
+// Update Post
 router.put("/update/:id", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
-    const { title, body, imageUrl, tags } = req.body;
+    const { title, body, tags } = req.body;
 
     const postUpdated = post;
 
     if (title) postUpdated.title = title;
     if (body) postUpdated.body = body;
-    if (imageUrl) postUpdated.imageUrl = imageUrl;
     if (tags) postUpdated.tags = tags.split(",").map((tags) => tags.trim());
 
     if (post.userId === req.body.userId) {
@@ -98,68 +79,49 @@ router.put("/update/:id", auth, async (req, res) => {
           title: postUpdated.title,
           body: postUpdated.body,
           tags: postUpdated.tags,
-          imageUrl: postUpdated.imageUrl,
-          updated: true
         },
       });
 
-      // Updating Tag Schema
-      postUpdated.tags.forEach(async (tag) => {
-        const tagField = await Tags.find({ name: tag });
-
-        if (tagField) {
-          tag.posts.unshift(savedPost.id);
-          const savedTag = await tag.save();
-        } else {
-          const newTag = new Tag({ name: tag });
-          const savedTag = await newTag.save();
-
-          newTag.posts.unshift(savedPost.id);
-        }
+      await post.updateOne({
+        $set: { updated: true },
       });
 
       res.status(200).json(post);
-  
     } else {
-      res.status(403).json({ msg: "You can update only your post" });
+      res.status(403).json("you can update only your post");
     }
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// @Route  delete api/posts/delete/:id
-// @desc   Delete Post
-// @access Private
+// Delete Post
 router.delete("/delete/:id", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
     if (post.userId === req.body.userId) {
       await post.deleteOne({ _id: req.params.id });
-      res.status(200).json({ msg: "Post deleted" });
-
+      res.status(200).json("Post has been delete");
     } else {
-      res.status(403).json({ msg: "Error during deleting post" });
+      res.status(403).json("Error During Deleting Post");
     }
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// @Route  PUT api/posts/:id/like
-// @desc   Like/Dislike Post
-// @access Private
+// Like and Dislike
 router.put("/:id/like", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
     if (!post.likes.includes(req.user.id)) {
       await post.updateOne({ $push: { likes: req.user.id } });
-      res.status(200).json({msg: "Post liked"});
+      res.status(200).json("The post has been liked");
     } else {
       await post.updateOne({ $pull: { likes: req.user.id } });
-      res.status(200).json({msg: "Post Disliked"});
+      res.status(200).json("The post has been disliked");
     }
   } catch (err) {
     console.log(err);
@@ -167,9 +129,7 @@ router.put("/:id/like", auth, async (req, res) => {
   }
 });
 
-// @Route  GET api/posts/comment/:id
-// @desc   Get Post Comments
-// @access Private
+// Get Comments
 router.get("/comment/:id", async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -185,9 +145,7 @@ router.get("/comment/:id", async (req, res) => {
   }
 });
 
-// @Route  POST api/posts/comment/post/:id
-// @desc   Post Comments
-// @access Private
+// Post Comment
 router.post("/comment/post/:id", auth, async (req, res) => {
   try {
     const commentObj = {
@@ -200,17 +158,13 @@ router.post("/comment/post/:id", auth, async (req, res) => {
     post.comments.unshift(commentObj);
 
     const savedPost = await post.save();
-    res.status(200).json(savedPost);
+    res.status(200).json(savedPost.comments);
   } catch (err) {
-
     console.log(err);
     res.status(500).json(err);
   }
 });
 
-// @Route  POST api/posts/comment/update/:id
-// @desc   Update Post Comments
-// @access Private
 router.post("/comment/update/:id", auth, async (req, res) => {
   try {
     const commentObj = {
@@ -219,7 +173,6 @@ router.post("/comment/update/:id", auth, async (req, res) => {
     };
 
     const post = await Post.findById(req.params.id);
-
     const comment = post.comments.find(
       (comment) => comment.id === commentObj.commentid
     );
@@ -229,47 +182,26 @@ router.post("/comment/update/:id", auth, async (req, res) => {
 
     post.updateOne({ $push: { comment: commentObj.commentid } });
 
-    const savedPost = await post.save();
-    res.status(200).json(savedPost);
-  } catch (err) {
+    console.log(post.comments);
+    res.status(200).json(post.comments);
 
+    // if (post.comments.includes(commentObj.commentid)) {
+    //   await post.updateOne({ $push: { likes: req.user.id } });
+    //   res.status(200).json("The post has been liked");
+    // } else {
+    //   await post.updateOne({ $pull: { likes: req.user.id } });
+    //   res.status(200).json("The post has been disliked");
+    // }
+  } catch (err) {
     console.log(err);
     res.status(500).json(err);
   }
 });
 
-// @Route DELETE api/posts/comment/delete/:id
-// @desc Delete Post Comments
-// @access Private
-router.post("/comment/update/:id", auth, async (req, res) => {
+// Posts under hashtag
+router.get("/tags", auth, async (req, res) => {
   try {
-    const commentObj = {
-      commentid: req.body.commentid,
-    };
-
-    const post = await Post.findById(req.params.id);
-
-    const comment = post.comments.find(
-      (comment) => comment.id === commentObj.commentid
-    );
-
-    post.updateOne({ $pull: { comment: commentObj.commentid } });
-
-    const savedPost = await post.save();
-    res.status(200).json(savedPost);
-  } catch (err) {
-
-    console.log(err);
-    res.status(500).json(err);
-  }
-});
-
-// @Route GET api/posts/tags/:name
-// @desc Get Posts under Tag
-// @access Private
-router.get("/tags/:name", auth, async (req, res) => {
-  try {
-    const hashtag = await Tags.find({name:name});
+    const hashtag = await Tags.find({});
     if (hashtag) {
       return res.status(400).json(hashtag);
     } else {
@@ -281,17 +213,4 @@ router.get("/tags/:name", auth, async (req, res) => {
   }
 });
 
-// @Route POST api/posts/tags/:name
-// @desc Get Posts under Tag
-// @access Private
-
 module.exports = router;
-
-
-    // if (post.comments.includes(commentObj.commentid)) {
-    //   await post.updateOne({ $push: { likes: req.user.id } });
-    //   res.status(200).json("The post has been liked");
-    // } else {
-    //   await post.updateOne({ $pull: { likes: req.user.id } });
-    //   res.status(200).json("The post has been disliked");
-    // }

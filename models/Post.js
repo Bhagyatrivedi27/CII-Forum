@@ -1,80 +1,75 @@
 const mongoose = require("mongoose");
 
-const PostSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+const PostSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+  },
 
-    username: {
-      type: String,
-      max: 20,
-    },
+  username: {
+    type: String,
+    max: 20,
+  },
 
-    title: {
-      type: String,
-      max: 20,
-    },
+  title: {
+    type: String,
+    max: 20,
+  },
 
-    body: {
-      type: String,
-      max: 500,
-    },
+  body: {
+    type: String,
+    max: 500,
+  },
 
-    imgUrl: {
-      type: String,
-      default:"",
-    },
+  img: {
+    type: String,
+  },
 
-    likes: {
-      type: Array,
-      default: [],
-    },
+  likes: {
+    type: Array,
+    default: [],
+  },
 
-    tags: {
-      type: [String],
-      default: [],
-    },
+  tags: {
+    type: Array,
+    default: [],
+  },
 
-    updated: {
-      type: Boolean,
-      default: false,
-    },
+  updated: {
+    type: Boolean,
+    default:false
+  },
 
-    comments: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "users",
-        },
-
-        text: {
-          type: String,
-          required: true,
-        },
-
-        name: {
-          type: String,
-          default: "Anonyomous",
-        },
-
-        edited: {
-          type: Boolean,
-          default: false,
-        },
-
-        date: {
-          type: Date,
-          default: Date.now,
-        },
+  comments: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users",
       },
-    ],
-
-    date: {
-      type: Date,
-      default: Date.now,
+      text: {
+        type: String,
+        required: true,
+      },
+      name: {
+        type: String,
+        default: "Anonyomous",
+      },
+      edited: {
+        type: Boolean,
+        default: false,
+      },
+      date: {
+        type: Date,
+        default: Date.now,
+      },
     },
-  });
+  ],
+
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 
 module.exports = Posts = mongoose.model("post", PostSchema);
