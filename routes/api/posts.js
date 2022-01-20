@@ -36,6 +36,9 @@ router.post("/post", auth, async (req, res) => {
   postField.user = req.user.id;
   if (title) postField.title = title;
   if (body) postField.body = body;
+  if (tags) {
+    postField.tags = tags.split(",").map((tag) => tag.trim());
+  }
 
   // Creating Post
   const newPost = new Post(postField);
@@ -52,18 +55,22 @@ router.put("/update/:id", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
-    const { title, body } = req.body;
+    const { title, body, tags } = req.body;
 
     const postUpdated = post;
 
     if (title) postUpdated.title = title;
     if (body) postUpdated.body = body;
+    if (tags) {
+      postUpdated.tags = tags.split(",").map((tag) => tag.trim());
+    }
 
     if (post.userId === req.body.userId) {
       await post.updateOne({
         $set: {
           title: postUpdated.title,
           body: postUpdated.body,
+          tags: postUpdated.tags,
         },
       });
 
@@ -196,6 +203,25 @@ router.get('/timeline', async(res, req) => {
     res.status(500).json(err);
   }
 })
+
+// @Route  GET api/posts
+// @desc   Test route
+// @access Public
+
+// Get Tags under post
+router.get("/tag/:name", auth, async (req, res) => {
+  try {
+    const posts = await Post.find({ "tags": { "$regex": `${req.params.name}`, "$options": "i" } });
+    if (!posts) {
+      return res.status(403).json({ msg: "No Posts under this tag" });
+    } else {
+      return res.status(200).json(posts);
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
 module.exports = router;
 
 // Posts under hashtag

@@ -24,20 +24,12 @@ app.get("/", (req, res) => {
   res.send("WELCOME TO CII FORUM HOME !");
 });
 
-<<<<<<< HEAD
 //Define Routes
 app.use('/api/users', require('./routes/api/users'));
 app.use('/api/posts', require('./routes/api/posts'));
 app.use('/api/profile', require('./routes/api/profile'));
 app.use('/api/auth', require('./routes/api/auth'));
-app.use('/api/category', require('./routes/api/category'));
-=======
-// Define Routes
-app.use("/api/users", require("./routes/api/users"));
-app.use("/api/posts", require("./routes/api/posts"));
-app.use("/api/profile", require("./routes/api/profile"));
-app.use("/api/auth", require("./routes/api/auth"));
->>>>>>> a3ced2f62666634268fab9d0335d2d3f5d8deca3
+app.use('/api/tags', require('./routes/api/tags'));
 
 // Server Listen
 app.listen(port, () =>

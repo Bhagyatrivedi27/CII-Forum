@@ -34,13 +34,10 @@ const PostSchema = new mongoose.Schema({
     type: Array,
     default: [],
   },
-categoriesid: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "categories",
-      },
+
   updated: {
     type: Boolean,
-    default:false
+    default: false,
   },
 
   comments: [
@@ -73,6 +70,5 @@ categoriesid: {
     default: Date.now,
   },
 });
-
 
 module.exports = Posts = mongoose.model("post", PostSchema);

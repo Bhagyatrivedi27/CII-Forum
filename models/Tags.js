@@ -4,17 +4,14 @@ const TagsSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
+    trim: true,
+  },
+  
+  slug: {
+    type: String,
+    required: true,
     unique: true,
   },
-
-  posts: [
-    {
-      id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "post",
-      },
-    },
-  ],
 
   creationDate: {
     type: Date,

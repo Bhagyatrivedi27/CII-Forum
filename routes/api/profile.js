@@ -316,7 +316,7 @@ router.delete('/experience/:exp_id', auth, async(req,res) => {
 router.delete('/clubs/:club_id', auth, async(req,res) => {
     try {
         const profile = await Profile.findOne({ user: req.user.id})
-        const removeIndex = profile.clubs.map(item => item.id).indexOf(req.params.exp_id)
+        const removeIndex = profile.clubs.map(item => item.id).indexOf(req.params.club_id)
 
         profile.clubs.splice(removeIndex, 1)
         await profile.save();
@@ -334,7 +334,7 @@ router.delete('/clubs/:club_id', auth, async(req,res) => {
 router.delete('/badges/:badge_id', auth, async(req,res) => {
     try {
         const profile = await Profile.findOne({ user: req.user.id})
-        const removeIndex = profile.badges.map(item => item.id).indexOf(req.params.exp_id)
+        const removeIndex = profile.badges.map(item => item.id).indexOf(req.params.badge_id)
 
         profile.badges.splice(removeIndex, 1)
         await profile.save()
@@ -352,7 +352,7 @@ router.delete('/badges/:badge_id', auth, async(req,res) => {
 router.delete('/college/:clg_id', auth, async(req,res) => {
     try {
         const profile = await Profile.findOne({ user: req.user.id})
-        const removeIndex = profile.college.map(item => item.id).indexOf(req.params.exp_id)
+        const removeIndex = profile.college.map(item => item.id).indexOf(req.params.clg_id)
 
         profile.college.splice(removeIndex, 1)
         await profile.save()
