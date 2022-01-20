@@ -5,6 +5,12 @@ const ProfileSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user'
     },
+    firstname: {
+        type: String
+    },
+    lastname: {
+        type: String
+    },
     bio:{
         type: String
     },
@@ -17,9 +23,9 @@ const ProfileSchema = new mongoose.Schema({
     hometown:{
         type: String
     },
+
     college: [{
         degree:{
-            //Btech or Mtech
             type: String,
             required: true
         },
@@ -49,22 +55,27 @@ const ProfileSchema = new mongoose.Schema({
             required: true
         }
     }],
+
     contactNo: {
         type: Number,
     },
+    
     status: {
         type: String,
         required: true
     },
+
     skills: {
         type: [String],
         required: true
     },
+
     badges: [{
         title: {
             type: String
         }
     }],
+
     clubs: [{
         clubName: {
             type: String,
@@ -75,6 +86,7 @@ const ProfileSchema = new mongoose.Schema({
             required: true
         }
     }],
+
     experience: [{
         company: {
             type:String,
@@ -96,14 +108,15 @@ const ProfileSchema = new mongoose.Schema({
             type: String
         }
     }],
+
     hostel: {
         type: String,
     },
-    social: {
-        linkedin: {
-            type: String
-        }
+    
+    linkedin: {
+        type: String
     },
+
     date: {
         type: Date,
         default: Date.now

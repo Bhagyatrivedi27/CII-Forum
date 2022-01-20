@@ -1,90 +1,88 @@
-const express = require('express')
+const express = require("express");
 
 const router = express.Router();
 
-const auth = require('../../middleware/auth');
+const auth = require("../../middleware/auth");
 
-const User = require('../../models/User')
+const User = require("../../models/User");
 
-const {check, validationResult} = require('express-validator')
+const { check, validationResult } = require("express-validator");
 
-const config = require('config')
+const config = require("config");
 
-const jwt = require('jsonwebtoken')
+const jwt = require("jsonwebtoken");
 
-const bcrypt = require('bcryptjs')
+const bcrypt = require("bcryptjs");
 
 // @Route  GET api/auth
 // @desc   Test route
 // @access Public
-router.get('/', auth, async (req,res) => {
-    try {
-        const user = await User.findById(req.user.id).select('-password')
-        res.json(user)
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Sever Error');
-    }
+router.get("/", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    return res.status(500).json({ errors: [{ msg: "Server Error" }] });
+  }
 });
 
 // @Route  POST api/auth/user-login
 // @desc   Authenticate User & get Token
 // @access Public
-router.post('/user-login', [
-    check('email','Please include a valid email').isEmail(),
-    check('password','Password is required').exists()
-],
-    async (req,res) => {
+router.post(
+  "/user-login",
+  [
+    check("email", "Please include a valid email").isEmail(),
+    check("password", "Password is required").exists(),
+  ],
+  async (req, res) => {
     const errors = validationResult(req);
-    if(!errors.isEmpty()){
-        return res.status(400).json({errors: errors.array()});
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    const {email,password} = req.body;
+    const { email, password } = req.body;
 
-    // //Check if the email is an institute email ID 
-    // let subEmail1 = '@student.nitw.ac.in'
-    // let subEmail2 = '@nitw.ac.in'
-    // if(!email.includes(subEmail1) && !email.includes(subEmail2))
-    // {
-    //     return res.status(400).json({errors: [{msg:'Please enter a valid Institute Email'}] });
+    try {
+      //See if user exits
+      let user = await User.findOne({ email });
+      if (!user) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "Invalid Credentials" }] });
+      }
 
-    //     //exit
-    //     process.exit(1);
-    // }
+      const isMatch = await bcrypt.compare(password, user.password);
 
-    try{
+      if (!isMatch) {
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "Invalid Credentials" }] });
+      }
 
-        //See if user exits 
-        let user = await User.findOne({email});
-        if(!user){
-           return res.status(400).json({errors: [{msg:'Invalid Credentials'}] });
+      const payload = {
+        user: {
+          id: user.id,
+        },
+      };
+
+      jwt.sign(
+        payload,
+        config.get("jwtSecret"),
+        { expiresIn: 360000 },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
         }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if(!isMatch){
-            return res.status(400).json({errors: [{msg:'Invalid Credentials'}] });
-        }
-
-        const payload = {
-            user: {
-                id: user.id
-            }
-        }
-
-        jwt.sign(payload, config.get('jwtSecret'), {expiresIn: 360000},
-        (err, token)=>{
-            if(err)
-            throw err;
-            res.json({token});
-        })        
+      );
     } catch (err) {
-        console.error(err.message)
-        res.status(500).send('Server Error')
+      console.error(err.message);
+      return res.status(500).json({ errors: [{ msg: "Server Error" }] });
     }
-
-});
+  }
+);
 
 module.exports = router;
+
+/* Checking of email will be done on front end (nitw extension) */
