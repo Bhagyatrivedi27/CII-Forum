@@ -15,11 +15,11 @@ const Tags = require("../../models/Tags");
 // Get Post
 router.get("/", auth, async (req, res) => {
   try {
-    const posts = await Post.find({});
+    const posts = await Post.find({}).sort('-date');
     if (!posts) {
-      return res.status(400).json({ msg: "No Posts" });
+      return res.status(403).json({ msg: "No Posts" });
     } else {
-      return res.status(400).json(posts);
+      return res.status(200).json(posts);
     }
   } catch (err) {
     console.error(err.message);
@@ -36,9 +36,6 @@ router.post("/post", auth, async (req, res) => {
   postField.user = req.user.id;
   if (title) postField.title = title;
   if (body) postField.body = body;
-  if (tags) {
-    postField.tags = tags.split(",").map((tags) => tags.trim());
-  }
 
   // Creating Post
   const newPost = new Post(postField);
@@ -48,16 +45,6 @@ router.post("/post", auth, async (req, res) => {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
-
-  const tagObject = {
-    id: newPost.id
-  }
-  const newTag = new Tags({name:"WER",  $push :{posts:tagObject}});
-  const savedTag = await newTag.save();
-
-  newTag.posts.unshift(tagObject);
-  res.status(300).send("Created");
-
 });
 
 // Update Post
@@ -65,20 +52,18 @@ router.put("/update/:id", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
 
-    const { title, body, tags } = req.body;
+    const { title, body } = req.body;
 
     const postUpdated = post;
 
     if (title) postUpdated.title = title;
     if (body) postUpdated.body = body;
-    if (tags) postUpdated.tags = tags.split(",").map((tags) => tags.trim());
 
     if (post.userId === req.body.userId) {
       await post.updateOne({
         $set: {
           title: postUpdated.title,
           body: postUpdated.body,
-          tags: postUpdated.tags,
         },
       });
 
@@ -192,25 +177,38 @@ router.post("/comment/update/:id", auth, async (req, res) => {
     //   await post.updateOne({ $pull: { likes: req.user.id } });
     //   res.status(200).json("The post has been disliked");
     // }
+    
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
   }
 });
 
-// Posts under hashtag
-router.get("/tags", auth, async (req, res) => {
-  try {
-    const hashtag = await Tags.find({});
-    if (hashtag) {
-      return res.status(400).json(hashtag);
-    } else {
-      return res.status(400).json(hashtag.posts);
-    }
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
-  }
-});
+// Timeline Post
+router.get('/timeline', async(res, req) => {
+  let postArray = [];
 
+  try {
+    const currentUser = await User.findById(req.user.id);
+    const userPost = await Post.find({user: req.user});
+    // const hashtagPost 
+  } catch (err) {
+    res.status(500).json(err);
+  }
+})
 module.exports = router;
+
+// Posts under hashtag
+// router.get("/tags", auth, async (req, res) => {
+//   try {
+//     const hashtag = await Tags.find({});
+//     if (hashtag) {
+//       return res.status(400).json(hashtag);
+//     } else {
+//       return res.status(400).json(hashtag.posts);
+//     }
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).send("Server Error");
+//   }
+// });

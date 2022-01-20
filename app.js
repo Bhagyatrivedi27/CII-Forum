@@ -1,31 +1,36 @@
-const express = require('express')
-const bodyParser = require('body-parser')
-//frontend hits to backend
-const cors = require('cors')
+const express = require("express");
+const bodyParser = require("body-parser");
+const morgan = require("morgan");
 
-const connectDB = require('./config/db')
+// frontend hits to backend
+const cors = require("cors");
 
-const app = express()
+const connectDB = require("./config/db");
 
-//Connect to DB
+const app = express();
+
+// Connect to DB
 connectDB();
 
-//MiddleWare Init
-app.use(express.json({extended: false}));
+// MiddleWare Init
+app.use(express.json({ extended: false }));
 
-const port = process.env.PORT||3000;
+// Logging 
+app.use(morgan("dev"));
 
-app.get('/' , (req,res) => {
-    res.send('WELCOME TO CII FORUM HOME !')
-})
+const port = process.env.PORT || 3000;
 
-//Define Routes
-app.use('/api/users', require('./routes/api/users'));
-app.use('/api/posts', require('./routes/api/posts'));
-app.use('/api/profile', require('./routes/api/profile'));
-app.use('/api/auth', require('./routes/api/auth'));
+app.get("/", (req, res) => {
+  res.send("WELCOME TO CII FORUM HOME !");
+});
 
-//server 
-app.listen(port, () => 
-    console.log(`[Info] Server started successfully! Listening at ${port}`)
-)
+// Define Routes
+app.use("/api/users", require("./routes/api/users"));
+app.use("/api/posts", require("./routes/api/posts"));
+app.use("/api/profile", require("./routes/api/profile"));
+app.use("/api/auth", require("./routes/api/auth"));
+
+// Server Listen
+app.listen(port, () =>
+  console.log(`[Info] Server started successfully! Listening at ${port}`)
+);

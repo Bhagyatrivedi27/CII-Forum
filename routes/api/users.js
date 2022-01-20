@@ -7,28 +7,33 @@ const config = require("config");
 const { check, validationResult } = require("express-validator");
 
 const gravatar = require("gravatar");
+
 const bcrypt = require("bcryptjs");
+
 const jwt = require("jsonwebtoken");
+
 const nodemailer = require("nodemailer");
 
 const User = require("../../models/User");
+const Profile = require("../../models/Profile");
 
-const { cookie } = require("request");
-
-// @Route  GET http://localhost:3000/api/users/verify
+// @Route  GET api/users/verify
 // @desc   Verify the entered email and account creation
 // @access Private
 router.get("/verify", async function (req, res) {
   token = req.query.id;
+
   if (token) {
     try {
-      const decoded = jwt.verify(token, config.get("jwtVerify"), { expiresIn: 360000 })
+      const decoded = jwt.verify(token, config.get("jwtVerify"), {
+        expiresIn: 360000,
+      });
 
       const { name, email, password, joiningYear, rollNo, regNo } = decoded;
 
       let user = await User.findOne({ email });
-      if(user) {
-        return res.send("Account Already Verified");
+      if (user) {
+        res.status(400).json({ errors: [{ msg: "Account already verified" }] });
       }
 
       try {
@@ -51,7 +56,7 @@ router.get("/verify", async function (req, res) {
         //Encrypt password
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
-        console.log("YESS");
+
         //Save user to database
         await user.save();
         console.log("User Created...");
@@ -74,23 +79,20 @@ router.get("/verify", async function (req, res) {
         );
 
         return res.status(200).json(token);
-
       } catch (err) {
         console.log(err);
-        return res.status(403).send("Server Error")
+        return res.status(500).json({ errors: [{ msg: "Server Error" }] });
       }
-
     } catch (err) {
       console.log(err);
-      return res.status(403).send("Server Error");
+      return res.status(500).json({ errors: [{ msg: "Server Error" }] });
     }
-
   } else {
-    return res.status(403).send("Token does not exist");
+    return res.status(403).json({ errors: [{ msg: "Token Does not Exist" }] });
   }
 });
 
-// @Route  POST http://localhost:3000/api/users/register-user
+// @Route  POST api/users/register-user
 // @desc   Register User
 // @access Public
 router.post(
@@ -98,7 +100,10 @@ router.post(
   [
     check("name", "Name is required").not().isEmpty(),
     check("email", "Please include a valid email").isEmail(),
-    check("password","Please enter a password with 6 or more characters").isLength({ min: 6 }),
+    check(
+      "password",
+      "Please enter a password with 6 or more characters"
+    ).isLength({ min: 6 }),
     check("joiningYear", "Please enter year of joining").not().isEmpty(),
     check("rollNo", "Please enter valid roll number").not().isEmpty(),
     check("regNo", "Please enter valid registration number").not().isEmpty(),
@@ -112,30 +117,40 @@ router.post(
     const { name, email, password, joiningYear, rollNo, regNo } = req.body;
     const user_detail = req.body;
 
-    if(!email.includes("@student.nitw.ac.in") && !email.includes("@nitw.ac.in")) {
-      return res.status(400).json({ errors: [{ msg: "Please enter a valid Institute Email" }] });
+    if (
+      !email.includes("@student.nitw.ac.in") &&
+      !email.includes("@nitw.ac.in")
+    ) {
+      return res
+        .status(400)
+        .json({ errors: [{ msg: "Please enter a valid Institute Email" }] });
     }
 
+    //See if user exits
     try {
-      //See if user exits
       let user = await User.findOne({ email });
       if (user) {
-        return res.status(400).json({ errors: [{ msg: "User Already Exists" }] });
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "User Already Exists" }] });
       }
 
       user = await User.findOne({ rollNo });
       if (user) {
-        return res.status(400).json({ errors: [{ msg: "User Already Exists" }] });
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "User Already Exists" }] });
       }
 
       user = await User.findOne({ regNo });
       if (user) {
-        return res.status(400).json({ errors: [{ msg: "User Already Exists" }] });
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "User Already Exists" }] });
       }
-
     } catch (err) {
       console.error(err.message);
-      res.status(500).send("Server Error");
+      return res.status(500).json({ errors: [{ msg: "Server Error" }] });
     }
 
     // Email Verification
@@ -145,7 +160,11 @@ router.post(
       config.get("jwtVerify")
     );
 
-    var url = config.get("baseUrl") + "api/users/verify?id=" + token_mail_verification;
+    var url =
+      config.get("http://localhost:3000/") +
+      "api/users/verify?id=" +
+      token_mail_verification;
+
     // Initializing Nodemail Transporter
     try {
       let transporter = nodemailer.createTransport({
@@ -167,23 +186,22 @@ router.post(
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
-        if(error) {
+        if (error) {
           return res.status(403).send(error.message);
         } else {
-          return res.status(200).send("Email Sent");  
+          return res.status(200).send("Email Sent");
         }
       });
-
-    } catch(err) {
+    } catch (err) {
       console.error(err.message);
-      return res.status(500).send("Server Error");
+      return res.status(500).json({ errors: [{ msg: "Server Error" }] });
     }
   }
 );
 
 // @Route  POST api/users/delete-user
 // @desc   Delete User
-// @access Public
+// @access Private
 router.post(
   "/delete-user",
   [check("email", "Please include a valid email").isEmail()],
@@ -199,16 +217,18 @@ router.post(
 
     try {
       let user = await User.findOne({ email });
-      if(!user) {
+      if (!user) {
         return res.status(400).json({ errors: [{ msg: "User not found!" }] });
       }
+
+      // Removing user
       await User.remove({ email });
+      await Profile.remove(user);
 
-      return res.status(200).json({ msg: "User Deleted successfully! " });
-
+      return res.status(200).json({ msg: "User Deleted successfully!" });
     } catch (err) {
       console.error(err.message);
-      res.status(500).send("Server Error");
+      return res.status(500).json({ errors: [{ msg: "Server Error" }] });
     }
   }
 );
