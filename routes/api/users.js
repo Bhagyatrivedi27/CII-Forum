@@ -154,8 +154,8 @@ router.post(
         secure: false,
         requireTLS: true,
         auth: {
-          user: "rithiktester@gmail.com", // like : abc@gmail.com , Yoour email u are sending the mail from
-          pass: "rithikTEST1@", // like : pass@123
+          user: "forumigproject@gmail.com", // like : abc@gmail.com , Yoour email u are sending the mail from
+          pass: "Hello@12345", // like : pass@123
         },
       });
 

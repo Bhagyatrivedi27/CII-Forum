@@ -34,7 +34,10 @@ const PostSchema = new mongoose.Schema({
     type: Array,
     default: [],
   },
-
+categoriesid: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "categories",
+      },
   updated: {
     type: Boolean,
     default:false
