@@ -15,7 +15,7 @@ const Tags = require("../../models/Tags");
 // Get Post
 router.get("/", auth, async (req, res) => {
   try {
-    const posts = await Post.find({}).sort('-date');
+    const posts = await Post.find({});
     if (!posts) {
       return res.status(403).json({ msg: "No Posts" });
     } else {
@@ -44,16 +44,20 @@ router.post("/post", auth, async (req, res) => {
   const newPost = new Post(postField);
   try {
     const savedPost = await newPost.save();
+    res.status(200).json(savedPost);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
 });
 
+//TODO: Updated is not showing proper boolean.
+
 // Update Post
 router.put("/update/:id", auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ msg: "No Post Found" });
 
     const { title, body, tags } = req.body;
 
@@ -78,6 +82,7 @@ router.put("/update/:id", auth, async (req, res) => {
         $set: { updated: true },
       });
 
+      post.save();
       res.status(200).json(post);
     } else {
       res.status(403).json("you can update only your post");
@@ -94,9 +99,9 @@ router.delete("/delete/:id", auth, async (req, res) => {
 
     if (post.userId === req.body.userId) {
       await post.deleteOne({ _id: req.params.id });
-      res.status(200).json("Post has been delete");
+      res.status(200).json({ msg: "Post Deleted" });
     } else {
-      res.status(403).json("Error During Deleting Post");
+      res.status(403).json({ msg: "Error During Deleting Post" });
     }
   } catch (err) {
     res.status(500).json(err);
@@ -110,10 +115,10 @@ router.put("/:id/like", auth, async (req, res) => {
 
     if (!post.likes.includes(req.user.id)) {
       await post.updateOne({ $push: { likes: req.user.id } });
-      res.status(200).json("The post has been liked");
+      res.status(200).json({ msg: "The post has been liked" });
     } else {
       await post.updateOne({ $pull: { likes: req.user.id } });
-      res.status(200).json("The post has been disliked");
+      res.status(200).json({ msg: "The post has been disliked" });
     }
   } catch (err) {
     console.log(err);
@@ -143,7 +148,7 @@ router.post("/comment/post/:id", auth, async (req, res) => {
     const commentObj = {
       user: req.user.id,
       text: req.body.text,
-      name: req.body.name,
+      name: req.user.name,
     };
 
     const post = await Post.findById(req.params.id);
@@ -157,61 +162,66 @@ router.post("/comment/post/:id", auth, async (req, res) => {
   }
 });
 
+// Update Command.
 router.post("/comment/update/:id", auth, async (req, res) => {
-  try {
-    const commentObj = {
-      text: req.body.text,
-      commentid: req.body.commentid,
-    };
-
-    const post = await Post.findById(req.params.id);
-    const comment = post.comments.find(
-      (comment) => comment.id === commentObj.commentid
-    );
-
-    comment.edited = true;
-    comment.text = commentObj.text;
-
-    post.updateOne({ $push: { comment: commentObj.commentid } });
-
-    console.log(post.comments);
-    res.status(200).json(post.comments);
-
-    // if (post.comments.includes(commentObj.commentid)) {
-    //   await post.updateOne({ $push: { likes: req.user.id } });
-    //   res.status(200).json("The post has been liked");
-    // } else {
-    //   await post.updateOne({ $pull: { likes: req.user.id } });
-    //   res.status(200).json("The post has been disliked");
-    // }
-    
-  } catch (err) {
-    console.log(err);
-    res.status(500).json(err);
-  }
+  Post.findById(req.params.id, async (err, result) => {
+    if (!err) {
+      if (!result) {
+        res.status(404).send("Post not found");
+      } else {
+        result.comments.id(req.body.commentid).text = req.body.text;
+        result.comments.id(req.body.commentid).edited = true;
+        result.markModified("comments");
+        result.save(function (saveerr, saveresult) {
+          if (!saveerr) {
+            res.status(200).send(saveresult.comments);
+          } else {
+            res.status(400).send(saveerr.message);
+          }
+        });
+      }
+    } else {
+      res.status(400).send(err.message);
+    }
+  });
 });
 
-// Timeline Post
-router.get('/timeline', async(res, req) => {
-  let postArray = [];
-
-  try {
-    const currentUser = await User.findById(req.user.id);
-    const userPost = await Post.find({user: req.user});
-    // const hashtagPost 
-  } catch (err) {
-    res.status(500).json(err);
-  }
-})
+router.post("/comment/delete/:id", auth, async (req, res) => {
+  Post.findById(req.params.id, function (err, result) {
+    if (!err) {
+      if (!result) {
+        res.status(404).send("User was not found");
+      } else {
+        result.comments.id(req.body.commentid).remove(function (removeerr, removresult) {
+          if (removeerr) {
+            res.status(400).send(removeerr.message);
+          }
+        });
+        result.markModified("comments");
+        result.save(function (saveerr, saveresult) {
+          if (!saveerr) {
+            res.status(200).send(saveresult);
+          } else {
+            res.status(400).send(saveerr.message);
+          }
+        });
+      }
+    } else {
+      res.status(400).send(err.message);
+    }
+  });
+});
 
 // @Route  GET api/posts
 // @desc   Test route
 // @access Public
 
-// Get Tags under post
+// Get post under tag
 router.get("/tag/:name", auth, async (req, res) => {
   try {
-    const posts = await Post.find({ "tags": { "$regex": `${req.params.name}`, "$options": "i" } });
+    const posts = await Post.find({
+      tags: { $regex: `${req.params.name}`, $options: "i" },
+    });
     if (!posts) {
       return res.status(403).json({ msg: "No Posts under this tag" });
     } else {
@@ -222,19 +232,47 @@ router.get("/tag/:name", auth, async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
 module.exports = router;
 
-// Posts under hashtag
-// router.get("/tags", auth, async (req, res) => {
+// Timeline Post
+// router.get("/timeline", async (res, req) => {
+//   let postArray = [];
+
 //   try {
-//     const hashtag = await Tags.find({});
-//     if (hashtag) {
-//       return res.status(400).json(hashtag);
-//     } else {
-//       return res.status(400).json(hashtag.posts);
-//     }
+//     const currentUser = await User.findById(req.user.id);
+//     const userPost = await Post.find({ user: req.user });
+//     // const hashtagPost
 //   } catch (err) {
-//     console.error(err.message);
-//     res.status(500).send("Server Error");
+//     res.status(500).json(err);
 //   }
 // });
+
+//   const post = await Post.findOne({ id: req.params.id });
+//   const comment = post.comments.id(req.body.commentid)
+
+//   comment.text = "mama";
+//   comment.edited = "false";
+
+//   await comment.save();
+//   // await Post.findOneAndUpdate(
+//   //   { "_id": req.params.id, "comments.id": req.body.commentid },
+//   //   {
+//   //     $set: { "comments.$.text": req.body.text, "comments.$.edited": true },
+//   //   }
+//   // );
+
+//   res.status(200).json(post.comments);
+
+//   // if (post.comments.includes(commentObj.commentid)) {
+//   //   await post.updateOne({ $push: { likes: req.user.id } });
+//   //   res.status(200).json("The post has been liked");
+//   // } else {
+//   //   await post.updateOne({ $pull: { likes: req.user.id } });
+//   //   res.status(200).json("The post has been disliked");
+//   // }
+
+// } catch (err) {
+//   console.log(err);
+//   res.status(500).json(err);
+// }

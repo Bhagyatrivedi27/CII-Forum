@@ -18,6 +18,7 @@ router.post("/create", async (req, res) => {
   const newTag = new Tags(tagObj);
   try {
     const savedTag = await newTag.save();
+    res.status(200).json(savedTag);
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");

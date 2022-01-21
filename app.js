@@ -14,6 +14,7 @@ connectDB();
 
 // MiddleWare Init
 app.use(express.json({ extended: false }));
+app.use(cors());
 
 // Logging 
 app.use(morgan("dev"));

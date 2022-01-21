@@ -77,8 +77,8 @@ router.get("/verify", async function (req, res) {
             res.json({ token });
           }
         );
-
-        return res.status(200).json(token);
+        
+        return res.status(200).json({msg: "User Created and Logged In"});
       } catch (err) {
         console.log(err);
         return res.status(500).json({ errors: [{ msg: "Server Error" }] });
@@ -123,7 +123,7 @@ router.post(
     ) {
       return res
         .status(400)
-        .json({ errors: [{ msg: "Please enter a valid Institute Email" }] });
+        .json({ errors: { msg: "Please enter a valid Institute Email" } });
     }
 
     //See if user exits
@@ -160,10 +160,7 @@ router.post(
       config.get("jwtVerify")
     );
 
-    var url =
-      config.get("http://localhost:3000/") +
-      "api/users/verify?id=" +
-      token_mail_verification;
+    var url = "http://localhost:3000/api/users/verify?id=" + token_mail_verification;
 
     // Initializing Nodemail Transporter
     try {
@@ -173,8 +170,8 @@ router.post(
         secure: false,
         requireTLS: true,
         auth: {
-          user: "forumigproject@gmail.com", // like : abc@gmail.com , Yoour email u are sending the mail from
-          pass: "Hello@12345", // like : pass@123
+          user: "rithiktester@gmail.com", // like : abc@gmail.com , Yoour email u are sending the mail from
+          pass: "rithikTEST1@", // like : pass@123
         },
       });
 
@@ -187,9 +184,9 @@ router.post(
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          return res.status(403).send(error.message);
+          return res.status(403).json(error.message);
         } else {
-          return res.status(200).send("Email Sent");
+          return res.status(200).json({ msg: "Verification mail Sent", email: `${email}` });
         }
       });
     } catch (err) {

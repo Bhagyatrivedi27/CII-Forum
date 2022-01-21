@@ -76,7 +76,7 @@ router.post('/', [auth, [
     }
 
     try {
-        let profile = await Profile.findOne({user: req.body.id})
+        let profile = await Profile.findOne({user: req.user.id})
         
         if(profile){
             //update
@@ -119,8 +119,8 @@ router.get('/user/:user_id',auth, async (req,res) => {
 router.delete('/',auth, async (req,res) => {
     try {
         //remove profile
-        await Profile.findOneAndRemove({user: req.body.id})
-        await User.findOneAndRemove({_id: req.user.id})
+        await Profile.findOneAndRemove({user: req.user.id})
+        // await User.findOneAndRemove({_id: req.user.id})
         
         res.json({msg: 'User deleted'})
     } catch (err) {

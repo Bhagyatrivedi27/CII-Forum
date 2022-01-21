@@ -73,9 +73,15 @@ router.post(
         { expiresIn: 360000 },
         (err, token) => {
           if (err) throw err;
-          res.json({ token });
+
+          // TODO: Error in Header Set, look for that
+          req.headers["x-auth-token"] = token;  
+          res.status(200).json({ msg : "Logged In", token : token });
         }
       );
+      
+     
+
     } catch (err) {
       console.error(err.message);
       return res.status(500).json({ errors: [{ msg: "Server Error" }] });
