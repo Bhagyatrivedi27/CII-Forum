@@ -170,13 +170,13 @@ router.post(
         secure: false,
         requireTLS: true,
         auth: {
-          user: "rithiktester@gmail.com", // like : abc@gmail.com , Yoour email u are sending the mail from
-          pass: "rithikTEST1@", // like : pass@123
+          user: "", // like : abc@gmail.com , Yoour email u are sending the mail from
+          pass: "", // like : pass@123
         },
       });
 
       let mailOptions = {
-        from: "rithiktester@gmail.com",
+        from: "",
         to: `${email}`,
         subject: "IG Forum Verification Email",
         text: "Click on the link to veriy your account " + url,
