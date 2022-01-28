@@ -3,6 +3,7 @@ const bodyParser = require('body-parser')
 //frontend hits to backend
 const cors = require('cors')
 
+
 const connectDB = require('./config/db')
 
 const app = express()
@@ -15,6 +16,13 @@ app.use(express.json({extended: false}));
 
 const port = process.env.PORT||3000;
 
+// app.use(function(req, res, next) {
+//     res.header('Access-Control-Allow-Origin', '*');
+//     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+//     next();
+//   });
+
+  app.use(cors())
 app.get('/' , (req,res) => {
     res.send('WELCOME TO CII FORUM HOME !')
 })

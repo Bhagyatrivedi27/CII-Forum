@@ -52,6 +52,11 @@ router.post("/post", auth, async (req, res) => {
   const tagObject = {
     id: newPost.id
   }
+
+  //You need to check if there are existing tag available in the DB. 
+  // If there is one, append to that array 
+  // If not, Create one 
+
   const newTag = new Tags({name:"WER",  $push :{posts:tagObject}});
   const savedTag = await newTag.save();
 

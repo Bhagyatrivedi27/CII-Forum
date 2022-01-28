@@ -90,7 +90,7 @@ router.get("/verify", async function (req, res) {
   }
 });
 
-// @Route  POST http://localhost:3000/api/users/register-user
+// @Route  POST `http://localhost:3000/api/users/register-user`
 // @desc   Register User
 // @access Public
 router.post(
@@ -154,13 +154,13 @@ router.post(
         secure: false,
         requireTLS: true,
         auth: {
-          user: "rithiktester@gmail.com", // like : abc@gmail.com , Yoour email u are sending the mail from
-          pass: "rithikTEST1@", // like : pass@123
+          user: "ig-nitw@student.nitw.ac.in", // like : abc@gmail.com , Yoour email u are sending the mail from
+          pass: "%KePPKIm5dL1mz69!saw@hHFGM1IItGne1UQhpBrcR3QK4GG^s", // like : pass@123
         },
       });
 
       let mailOptions = {
-        from: "rithiktester@gmail.com",
+        from: "ig-nitw@student.nitw.ac.in",
         to: `${email}`,
         subject: "IG Forum Verification Email",
         text: "Click on the link to veriy your account " + url,
