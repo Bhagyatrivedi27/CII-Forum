@@ -23,8 +23,8 @@ router.get("/verify", async function (req, res) {
   if (token) {
     try {
       const decoded = jwt.verify(token, config.get("jwtVerify"), { expiresIn: 360000 })
-
       const { name, email, password, joiningYear, rollNo, regNo } = decoded;
+      res.cookie('auth',token);
 
       let user = await User.findOne({ email });
       if(user) {
@@ -55,13 +55,11 @@ router.get("/verify", async function (req, res) {
         //Save user to database
         await user.save();
         console.log("User Created...");
-
         const payload = {
           user: {
             id: user.id,
           },
         };
-
         jwt.sign(
           payload,
           config.get("jwtSecret"),
