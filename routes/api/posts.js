@@ -15,6 +15,7 @@ const Tags = require("../../models/Tags");
 // Get Post
 router.get("/", auth, async (req, res) => {
   try {
+    console.log(res.header);
     const posts = await Post.find({});
     if (!posts) {
       return res.status(403).json({ msg: "No Posts" });

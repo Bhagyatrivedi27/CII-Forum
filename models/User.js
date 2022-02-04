@@ -31,6 +31,10 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  followTags: {
+    type: Array,
+    default: [],
+  },
   date: {
     type: Date,
     default: Date.now,

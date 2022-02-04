@@ -14,8 +14,28 @@ const jwt = require("jsonwebtoken");
 
 const nodemailer = require("nodemailer");
 
+const auth = require("../../middleware/auth");
+
 const User = require("../../models/User");
 const Profile = require("../../models/Profile");
+const Tags = require("../../models/Tags");
+
+
+// @Route  GET api/users/meuser/:email
+// @desc   Get User Details
+// @access Private
+router.get("/meuser/:email", auth, async (req, res) => {
+  try {
+    let user = await User.find({email:req.params.email});
+    if (!user) {
+      return res.status(400).json({ msg: "There is no user for this user" });
+    }
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
 
 // @Route  GET api/users/verify
 // @desc   Verify the entered email and account creation
@@ -77,8 +97,8 @@ router.get("/verify", async function (req, res) {
             res.json({ token });
           }
         );
-        
-        return res.status(200).json({msg: "User Created and Logged In"});
+        console.log(token);
+        res.cookie("x-auth-token", token);
       } catch (err) {
         console.log(err);
         return res.status(500).json({ errors: [{ msg: "Server Error" }] });
@@ -113,7 +133,7 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
+    
     const { name, email, password, joiningYear, rollNo, regNo } = req.body;
     const user_detail = req.body;
 
@@ -154,6 +174,7 @@ router.post(
     }
 
     // Email Verification
+    
     // Token creation
     const token_mail_verification = jwt.sign(
       user_detail,
@@ -170,8 +191,8 @@ router.post(
         secure: false,
         requireTLS: true,
         auth: {
-          user: "", // like : abc@gmail.com , Yoour email u are sending the mail from
-          pass: "", // like : pass@123
+          user: "rithikTESTER@gmail.com", // like : abc@gmail.com , Yoour email u are sending the mail from
+          pass: "rithikTEST1@", // like : pass@123
         },
       });
 
@@ -229,6 +250,41 @@ router.post(
     }
   }
 );
+
+// Follow Tags
+router.put("/follow/:tag", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user.followTags.includes(req.params.tag)) {
+      await user.updateOne({ $push: { followTags: req.params.tag } });
+      res.status(200).json({ msg: "Hashtag Followed" });
+    } else {
+      await user.updateOne({ $pull: { followTags: req.params.tag } });
+      res.status(200).json({ msg: "Hashtag UnFollowed" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+});
+
+
+// Get User Followers
+router.get("/follow", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (user.followTags) {
+      res.status(200).json(user.followTags);
+    } else {
+      res.status(200).json({ msg: "You do not follow any hashtag" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+});
 
 module.exports = router;
 
